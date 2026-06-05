@@ -8,7 +8,10 @@ using namespace std;
 KAI_BEGIN
 
 namespace {
-void PopulateKeywords(std::map<std::string, PiTokenEnumType::Enum> &keywords) {
+// Templated on the map type so it works with both std::map (default) and
+// std::pmr::map (when KAI_USE_MONOTONIC_ALLOCATOR enables arena allocation).
+template <class KeywordMap>
+void PopulateKeywords(KeywordMap &keywords) {
     keywords["if"] = PiTokenEnumType::If;
     keywords["ife"] = PiTokenEnumType::IfElse;
     keywords["for"] = PiTokenEnumType::For;
