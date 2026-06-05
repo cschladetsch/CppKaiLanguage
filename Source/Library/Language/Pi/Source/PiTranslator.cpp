@@ -388,6 +388,10 @@ void PiTranslator::AppendTokenised(const TokenNode &tok) {
             AppendOp(Operation::Max);
             break;
 
+        case PiTokenEnumType::Abs:
+            AppendOp(Operation::Abs);
+            break;
+
         case PiTokenEnumType::Over:
             AppendOp(Operation::Over);
             break;

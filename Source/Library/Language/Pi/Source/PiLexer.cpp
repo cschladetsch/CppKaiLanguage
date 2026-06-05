@@ -46,6 +46,7 @@ void PopulateKeywords(KeywordMap &keywords) {
     keywords["roll"] = PiTokenEnumType::Roll;
     keywords["min"] = PiTokenEnumType::Min;
     keywords["max"] = PiTokenEnumType::Max;
+    keywords["abs"] = PiTokenEnumType::Abs;
     keywords["toarray"] = PiTokenEnumType::ToArray;
     keywords["gc"] = PiTokenEnumType::GarbageCollect;
     keywords["clear"] = PiTokenEnumType::Clear;

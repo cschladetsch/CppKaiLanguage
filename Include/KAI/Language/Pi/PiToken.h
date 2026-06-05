@@ -142,6 +142,7 @@ struct PiTokenEnumType {
         Modulo,  // % operator
         Min,     // min operator
         Max,     // max operator
+        Abs,     // abs operator: absolute value of top of stack
 
         Self,   // current_ continuation 'self'
         This,   // current_ _scope '.'
