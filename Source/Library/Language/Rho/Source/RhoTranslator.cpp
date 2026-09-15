@@ -6,6 +6,7 @@
 
 #include <concepts>
 #include <format>
+#include <iostream>
 #include <ranges>
 #include <stdexcept>
 #include <string>

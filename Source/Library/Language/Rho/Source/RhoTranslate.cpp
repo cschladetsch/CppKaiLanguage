@@ -203,7 +203,44 @@ void RhoTranslator::TranslateNode(AstNodePtr node) {
 }
 
 Pointer<Continuation> RhoTranslator::Translate(const char* text, Structure st) {
-    return Parent::Translate(text, st);
+    // NOTE: this used to just forward to Parent::Translate() (the shared
+    // TranslatorBase<RhoParser>::Translate template). Something in that
+    // shared pipeline was producing a flat Pi-style "Continuation" AST
+    // (empty-labelled TokenType leaves) instead of a real Rho parse tree
+    // for plain infix input such as "a =2" - i.e. the effective Parser
+    // being exercised at runtime did not behave like RhoParser at all.
+    // Rather than depend on that indirection, do the lex/parse/translate
+    // steps explicitly and unambiguously with RhoLexer/RhoParser here.
+    Failed = false;
+    Error.clear();
+
+    if (text == nullptr || text[0] == 0) {
+        return Object();
+    }
+
+    auto lex = std::make_shared<RhoLexer>(text, *reg_);
+    lex->Process();
+    if (lex->GetTokens().empty()) {
+        return Object();
+    }
+    if (lex->Failed) {
+        Fail(lex->Error);
+        return Object();
+    }
+
+    auto parser = std::make_shared<RhoParser>(*reg_);
+    parser->Process(lex, st);
+    if (parser->Failed) {
+        Fail(parser->GetError());
+        return Object();
+    }
+
+    PushNew();
+    TranslateNode(parser->GetRoot());
+
+    if (stack.empty()) KAI_THROW_0(EmptyStack);
+
+    return Pop();
 }
 
 KAI_END

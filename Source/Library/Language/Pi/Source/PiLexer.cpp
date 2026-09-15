@@ -78,6 +78,7 @@ void PopulateKeywords(KeywordMap &keywords) {
     keywords["send"] = PiTokenEnumType::Send;
     keywords["call"] = PiTokenEnumType::Suspend;
     keywords["at"] = PiTokenEnumType::GetChild;
+    keywords["push"] = PiTokenEnumType::Push;
 }
 }  // namespace
 

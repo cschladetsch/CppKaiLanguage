@@ -138,6 +138,7 @@ struct PiTokenEnumType {
         Freeze,
         Thaw,
         Send,
+        Push,  // append to an Array/List: (container value -- container)
 
         Modulo,  // % operator
         Min,     // min operator

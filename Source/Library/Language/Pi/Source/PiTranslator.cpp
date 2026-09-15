@@ -599,6 +599,13 @@ void PiTranslator::AppendTokenised(const TokenNode &tok) {
             AppendOp(Operation::GetChild);
             return;
 
+        case PiTokenEnumType::Push:
+            // (container value -- container) - append to an Array/List.
+            // Deliberately a separate operator from '+', which rejects
+            // Array/non-Array operands outright (see PerformBinaryOp.cpp).
+            AppendOp(Operation::ArrayPush);
+            return;
+
         case PiTokenEnumType::SetChild:
             AppendOp(Operation::SetChild);
             return;
