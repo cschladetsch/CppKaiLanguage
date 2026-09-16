@@ -830,7 +830,7 @@ void RhoTranslator::TranslatePiBlock(AstNodePtr node) {
                 AppendDirectOperation(Operation::LogicalXor);
                 break;
             case RhoTokenEnumType::BitAnd:
-                AppendDirectOperation(Operation::Suspend);
+                AppendDirectOperation(Operation::BitwiseAnd);
                 break;
             case RhoTokenEnumType::BitOr:
                 AppendDirectOperation(Operation::BitwiseOr);
@@ -848,11 +848,13 @@ void RhoTranslator::TranslatePiBlock(AstNodePtr node) {
                 AppendDirectOperation(Operation::Suspend);
                 break;
             case RhoTokenEnumType::Resume:
-            case RhoTokenEnumType::Replace:
                 AppendDirectOperation(Operation::Resume);
                 break;
-            case RhoTokenEnumType::Not:
+            case RhoTokenEnumType::Replace:
                 AppendDirectOperation(Operation::Replace);
+                break;
+            case RhoTokenEnumType::Not:
+                AppendDirectOperation(Operation::LogicalNot);
                 break;
             default:
                 Fail(std::format("Unsupported token in Pi block: {}",
