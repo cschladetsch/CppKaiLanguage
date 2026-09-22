@@ -7,6 +7,9 @@ The KAI surface languages, extracted from
 - **Pi** - a postfix / reverse-Polish language.
 - **Rho** - an infix language built on top of Pi.
 
+See the [docs site](https://cschladetsch.github.io/CppKaiLanguage/) for
+diagrams of the language pipeline and module dependency graph.
+
 ## Dependencies
 
 Downstream of [CppKaiCore](https://github.com/cschladetsch/CppKaiCore)
