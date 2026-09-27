@@ -13,16 +13,16 @@ KAI_BEGIN
 
 void RhoLang::Print() const {
     cout << "Input:" << endl;
-    KAI_TRACE_1(lex->GetInput());
+    KAI_TRACE_1(lex_->GetInput());
 
     cout << "Lexer:" << endl;
-    KAI_TRACE_1(lex->ToString());
+    KAI_TRACE_1(lex_->ToString());
 
     cout << "Parser:" << endl;
-    KAI_TRACE_1(parse->ToString());
+    KAI_TRACE_1(parse_->ToString());
 
     cout << "Trans:" << endl;
-    KAI_TRACE_1(trans->ToString());
+    KAI_TRACE_1(trans_->ToString());
 }
 
 Pointer<Continuation> RhoLang::TranslateFile(const char *name, Structure st) {
@@ -30,13 +30,13 @@ Pointer<Continuation> RhoLang::TranslateFile(const char *name, Structure st) {
 }
 
 Pointer<Continuation> RhoLang::Translate(const char *text, Structure st) {
-    if (lex->Failed) return Fail(lex->Error), Object();
+    if (lex_->failed) return Fail(lex_->error), Object();
 
-    if (parse->Failed) return Fail(parse->Error), Object();
+    if (parse_->failed) return Fail(parse_->GetError()), Object();
 
-    auto trans = make_shared<Translator>(reg);
+    auto trans = make_shared<Translator>(reg_);
     auto cont = trans->Translate(text, st);
-    if (trans->Failed) return Fail(trans->Error), Object();
+    if (trans->failed) return Fail(trans->error), Object();
 
     return cont;
 }

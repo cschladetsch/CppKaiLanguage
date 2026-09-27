@@ -21,7 +21,7 @@ class RhoLang : Lang<RhoTranslator> {
     void Print() const;
 
    protected:
-    using Parent::reg;
+    using Parent::reg_;
 };
 
 KAI_END

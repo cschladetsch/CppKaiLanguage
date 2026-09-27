@@ -44,13 +44,13 @@ Pointer<Continuation> PiTranslator::TranslateTokens(
 
     auto parse = std::make_shared<PiParser>(*reg_);
     if (!parse->ProcessTokens(tokens, st)) {
-        Fail(parse->Error);
+        Fail(parse->GetError());
         isTranslatingRoot = false;
         return Object();
     }
 
-    if (parse->Failed) {
-        Fail(parse->Error);
+    if (parse->failed) {
+        Fail(parse->GetError());
         isTranslatingRoot = false;
         return Object();
     }
@@ -58,7 +58,7 @@ Pointer<Continuation> PiTranslator::TranslateTokens(
     PushNew();
     TranslateNode(parse->GetRoot());
 
-    if (stack.empty()) KAI_THROW_0(EmptyStack);
+    if (stack_.empty()) KAI_THROW_0(EmptyStack);
 
     isTranslatingRoot = false;
 
@@ -428,12 +428,12 @@ void PiTranslator::AppendTokenised(const TokenNode &tok) {
 
         case PiTokenEnumType::Size: {
             // Debug print for size operation
-            std::cout << "Size operation detected, stack size: " << stack.size()
+            std::cout << "Size operation detected, stack size: " << stack_.size()
                       << std::endl;
 
             // Special case for "[] size" - directly push 0
-            if (stack.size() > 0) {
-                auto cont = stack.back();
+            if (stack_.size() > 0) {
+                auto cont = stack_.back();
                 if (cont->GetCode().Exists()) {
                     if (cont->GetCode()->Size() == 1) {
                         auto firstItem = cont->GetCode()->At(0);

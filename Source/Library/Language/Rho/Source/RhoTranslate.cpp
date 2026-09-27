@@ -211,8 +211,8 @@ Pointer<Continuation> RhoTranslator::Translate(const char* text, Structure st) {
     // being exercised at runtime did not behave like RhoParser at all.
     // Rather than depend on that indirection, do the lex/parse/translate
     // steps explicitly and unambiguously with RhoLexer/RhoParser here.
-    Failed = false;
-    Error.clear();
+    failed = false;
+    error.clear();
 
     if (text == nullptr || text[0] == 0) {
         return Object();
@@ -223,14 +223,14 @@ Pointer<Continuation> RhoTranslator::Translate(const char* text, Structure st) {
     if (lex->GetTokens().empty()) {
         return Object();
     }
-    if (lex->Failed) {
-        Fail(lex->Error);
+    if (lex->failed) {
+        Fail(lex->error);
         return Object();
     }
 
     auto parser = std::make_shared<RhoParser>(*reg_);
     parser->Process(lex, st);
-    if (parser->Failed) {
+    if (parser->failed) {
         Fail(parser->GetError());
         return Object();
     }
@@ -238,7 +238,7 @@ Pointer<Continuation> RhoTranslator::Translate(const char* text, Structure st) {
     PushNew();
     TranslateNode(parser->GetRoot());
 
-    if (stack.empty()) KAI_THROW_0(EmptyStack);
+    if (stack_.empty()) KAI_THROW_0(EmptyStack);
 
     return Pop();
 }

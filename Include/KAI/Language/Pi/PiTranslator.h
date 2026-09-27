@@ -23,7 +23,7 @@ class PiTranslator : public TranslatorBase<PiParser> {
     virtual ~PiTranslator();
 
     // Override base class methods to improve type handling
-    virtual Pointer<Continuation> Result() override { return stack.front(); }
+    virtual Pointer<Continuation> Result() override { return stack_.front(); }
 
     // Override to make Pi handle direct evaluation of expressions
     // This addresses the issue where expressions lose type information

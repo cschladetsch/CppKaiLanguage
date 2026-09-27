@@ -9,15 +9,15 @@ KAI_BEGIN
 bool PiParser::Process(std::shared_ptr<Lexer> lex, Structure st) {
     current = 0;
     indent = 0;
-    lexer = lex;
+    lexer_ = lex;
 
-    if (lexer->Failed) return Fail(lexer->Error);
+    if (lexer_->failed) return Fail(lexer_->error);
 
-    for (auto const &tok : lexer->GetTokens()) {
+    for (auto const &tok : lexer_->GetTokens()) {
         if (tok.type != TokenEnum::Whitespace &&
             tok.type != TokenEnum::NewLine && tok.type != TokenEnum::Tab &&
             tok.type != TokenEnum::Comment)
-            tokens.push_back(tok);
+            tokens_.push_back(tok);
     }
 
     return Run(st);
@@ -27,14 +27,14 @@ bool PiParser::ProcessTokens(const std::vector<TokenNode> &input,
                              Structure st) {
     current = 0;
     indent = 0;
-    lexer.reset();
-    tokens.clear();
+    lexer_.reset();
+    tokens_.clear();
 
     for (auto const &tok : input) {
         if (tok.type != TokenEnum::Whitespace &&
             tok.type != TokenEnum::NewLine && tok.type != TokenEnum::Tab &&
             tok.type != TokenEnum::Comment)
-            tokens.push_back(tok);
+            tokens_.push_back(tok);
     }
 
     return Run(st);
@@ -43,10 +43,10 @@ bool PiParser::ProcessTokens(const std::vector<TokenNode> &input,
 bool PiParser::Run(Structure st) {
     KAI_UNUSED_1(
         st);  // no real structure to Pi - it's mostly a sequence of tokens
-    root = NewNode(AstEnum::Continuation);
-    while (!Failed && NextSingle(root));
+    root_ = NewNode(AstEnum::Continuation);
+    while (!failed && NextSingle(root_));
 
-    return !Failed;
+    return !failed;
 }
 
 bool PiParser::NextSingle(AstNodePtr root) {
@@ -81,7 +81,7 @@ bool PiParser::NextSingle(AstNodePtr root) {
 bool PiParser::ParseCompound(AstNodePtr root, AstEnum nodeType, TokenEnum end) {
     Consume();
     auto node = NewNode(nodeType);
-    while (!Empty() && !Failed && !Try(end)) {
+    while (!Empty() && !failed && !Try(end)) {
         if (!NextSingle(node))
             return Fail(Lexer::CreateErrorMessage(
                 Current(), "Malformed compound %s",
@@ -90,7 +90,7 @@ bool PiParser::ParseCompound(AstNodePtr root, AstEnum nodeType, TokenEnum end) {
 
     if (Empty()) return Fail("Malformed compound");
 
-    if (Failed) return false;
+    if (failed) return false;
 
     Consume();
     root->Add(node);

@@ -22,29 +22,29 @@ static bool IsPiKeyword(const std::string& name) {
 }
 
 bool RhoParser::Process(std::shared_ptr<Lexer> lex, Structure st) {
-    lexer = lex;
-    if (lex->Failed) {
-        KAI_TRACE_ERROR() << "Lexer failed: " << lex->Error;
-        return Fail(lex->Error);
+    lexer_ = lex;
+    if (lex->failed) {
+        KAI_TRACE_ERROR() << "Lexer failed: " << lex->error;
+        return Fail(lex->error);
     }
 
     // Clear tokens and reset parser state
-    tokens.clear();
+    tokens_.clear();
     current = 0;  // Initialize current token index
-    stack.clear();
-    Failed = false;
+    stack_.clear();
+    failed = false;
 
     KAI_TRACE() << "Starting to process tokens";
     bool atLineStart = true;
-    for (auto tok : lexer->GetTokens()) {
+    for (auto tok : lexer_->GetTokens()) {
         // Keep whitespace at the beginning of lines for indentation
         if (tok.type == TokenEnum::Whitespace && atLineStart) {
-            tokens.push_back(tok);
+            tokens_.push_back(tok);
             KAI_TRACE() << "Token: " << TokenEnumType::ToString(tok.type)
                         << " (line start whitespace)";
         } else if (tok.type != TokenEnum::Whitespace &&
                    tok.type != TokenEnum::Comment) {
-            tokens.push_back(tok);
+            tokens_.push_back(tok);
             KAI_TRACE() << "Token: " << TokenEnumType::ToString(tok.type);
             atLineStart = false;
         }
@@ -55,7 +55,7 @@ bool RhoParser::Process(std::shared_ptr<Lexer> lex, Structure st) {
         }
     }
 
-    root = NewNode(AstEnum::Program);
+    root_ = NewNode(AstEnum::Program);
     KAI_TRACE() << "Created root Program node";
 
     return Run(st);
@@ -69,14 +69,14 @@ bool RhoParser::Run(Structure st) {
 
         case Structure::Expression:
             if (!Expression()) return CreateError("Expression expected");
-            root->Add(Pop());
+            root_->Add(Pop());
             break;
 
         case Structure::Function:
             // Functions are now only created via assignment syntax: a =
             // fun(b,c) So we treat it as an expression
             if (!Expression()) return CreateError("Expression expected");
-            root->Add(Pop());
+            root_->Add(Pop());
             break;
 
         case Structure::Program:
@@ -85,7 +85,7 @@ bool RhoParser::Run(Structure st) {
     }
 
     ConsumeNewLines();
-    if (!stack.empty())
+    if (!stack_.empty())
         return Fail("[Internal] Error: Stack not empty after parsing");
 
     return true;
@@ -107,7 +107,7 @@ bool RhoParser::Program() {
     }
 
     // Continue parsing until we reach the end or encounter an error
-    while (!Try(TokenType::None) && !Failed) {
+    while (!Try(TokenType::None) && !failed) {
         // Skip any newlines and/or semicolons between statements
         // This allows for Python-like syntax where either newlines or
         // semicolons can be used as statement separators, and both are optional
@@ -130,7 +130,7 @@ bool RhoParser::Program() {
                     << TokenEnumType::ToString(Current().type) << " '"
                     << Current().Text() << "'" << " at position "
                     << (int)current;
-        if (!Statement(root)) {
+        if (!Statement(root_)) {
             return Fail("Statement expected");
         }
 
@@ -156,7 +156,7 @@ bool RhoParser::Block(AstNodePtr node) {
                 << TokenEnumType::ToString(Current().type) << " '"
                 << Current().Text() << "' at position " << (int)current;
 
-    while (!Failed) {
+    while (!failed) {
         int level = 0;
 
         // Skip any newlines at the beginning of the block
@@ -208,7 +208,7 @@ bool RhoParser::Block(AstNodePtr node) {
 
             // Special handling: if we're at an 'else' token, DON'T rewind
             // This allows the parent IfCondition to see the else
-            if (current < tokens.size() && Current().type == TokenType::Else) {
+            if (current < tokens_.size() && Current().type == TokenType::Else) {
                 KAI_TRACE() << "Block: Exiting at else token, not rewinding";
                 return true;
             }
@@ -769,7 +769,7 @@ bool RhoParser::Factor() {
 
         // Add empty name token for anonymous function
         Slice anonymousSlice;
-        fun->Add(RhoToken(TokenEnum::Label, *lexer.get(), 0, anonymousSlice));
+        fun->Add(RhoToken(TokenEnum::Label, *lexer_.get(), 0, anonymousSlice));
 
         // Parse parameters with parentheses (required for clarity)
         Expect(TokenType::OpenParan);
@@ -821,7 +821,7 @@ bool RhoParser::Factor() {
         auto piContent = NewNode(NodeType::List);
         int braceCount = 1;  // We've already consumed the opening brace
 
-        while (braceCount > 0 && !Failed) {
+        while (braceCount > 0 && !failed) {
             if (Try(TokenType::OpenBrace)) {
                 braceCount++;
                 piContent->Add(NewNode(Consume()));
@@ -857,7 +857,7 @@ bool RhoParser::Factor() {
 bool RhoParser::ParseFactorIdent() {
     PushConsume();
 
-    while (!Failed) {
+    while (!failed) {
         if (Try(TokenType::Dot)) {
             ParseGetMember();
             continue;
@@ -1073,7 +1073,7 @@ bool RhoParser::WhileLoop(AstNodePtr block) {
 
 bool RhoParser::DoWhileLoop(AstNodePtr block) {
     // Safety check - ensure we have tokens to process
-    if (tokens.empty() || current >= tokens.size()) {
+    if (tokens_.empty() || current >= tokens_.size()) {
         KAI_TRACE_ERROR() << "No tokens to process in DoWhileLoop";
         return CreateError("No tokens to process in DoWhileLoop");
     }
@@ -1105,14 +1105,14 @@ bool RhoParser::DoWhileLoop(AstNodePtr block) {
     ConsumeWhitespace();
 
     // Debug current token
-    if (current < tokens.size()) {
+    if (current < tokens_.size()) {
         KAI_TRACE() << "Next token after whitespace: "
                     << TokenEnumType::ToString(Current().type);
     }
 
     // Check for the 'while' token
-    if (current >= tokens.size() || !Try(TokenType::While)) {
-        if (current < tokens.size()) {
+    if (current >= tokens_.size() || !Try(TokenType::While)) {
+        if (current < tokens_.size()) {
             KAI_TRACE_ERROR() << "Expected 'while', got: "
                               << TokenEnumType::ToString(Current().type);
         } else {
@@ -1421,7 +1421,7 @@ bool RhoParser::ForLoop(AstNodePtr block) {
     } else {
         // If no condition, add a 'true' literal to make it an infinite loop
         auto trueNode =
-            NewNode(RhoToken(TokenEnum::True, *lexer.get(), 0, Slice()));
+            NewNode(RhoToken(TokenEnum::True, *lexer_.get(), 0, Slice()));
         forNode->Add(trueNode);
     }
 

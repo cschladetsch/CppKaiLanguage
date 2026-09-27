@@ -354,7 +354,7 @@ void RhoTranslator::TranslateToken(AstNodePtr node) {
     }
 
     Fail(std::format("Unsupported node {}", node->ToString()));
-    KAI_TRACE_ERROR() << "Error: " << Error;
+    KAI_TRACE_ERROR() << "Error: " << error;
     KAI_NOT_IMPLEMENTED();
 }
 
@@ -1184,7 +1184,7 @@ void RhoTranslator::TranslateFunction(AstNodePtr node) {
         Pointer<Continuation> cont = functionCont;
         if (cont.Exists()) {
             for (auto it = argNames.rbegin(); it != argNames.rend(); ++it) {
-                cont->AddArg(Label(it->c_str()));
+                cont->AddArg(Label(it->CStr()));
             }
         }
     }
@@ -1193,7 +1193,7 @@ void RhoTranslator::TranslateFunction(AstNodePtr node) {
     Append(functionCont);
 
     // For named functions, store them with their name
-    if (!functionName.empty() && !functionName.StartsWith("_anon_")) {
+    if (!functionName.Empty() && !functionName.StartsWith("_anon_")) {
         String quotedPath = "'" + functionName;
         auto pathObj = reg_->New<Pathname>(Pathname(quotedPath));
         Append(pathObj);

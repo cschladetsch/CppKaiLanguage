@@ -82,7 +82,7 @@ void PopulateKeywords(KeywordMap &keywords) {
 }
 }  // namespace
 
-void PiLexer::AddKeyWords() { PopulateKeywords(keyWords); }
+void PiLexer::AddKeyWords() { PopulateKeywords(keyWords_); }
 
 bool PiLexer::TryGetKeyword(const std::string &text,
                             PiTokenEnumType::Enum &out) {
@@ -107,17 +107,17 @@ bool PiLexer::NextToken() {
 
     if (isdigit(current)) {
         // Parse number - could be int or float
-        int start = offset;
+        int start = offset_;
         Gather(isdigit);  // Collect initial digits
 
         // Check for decimal point followed by digits
         if (Current() == '.' && isdigit(Peek())) {
             Next();           // Skip '.'
             Gather(isdigit);  // Collect fractional digits
-            return Add(Enum::Float, Slice(start, offset));
+            return Add(Enum::Float, Slice(start, offset_));
         }
 
-        return Add(Enum::Int, Slice(start, offset));
+        return Add(Enum::Int, Slice(start, offset_));
     }
 
     switch (current) {
@@ -182,7 +182,7 @@ bool PiLexer::NextToken() {
             // Check if this is a negative number literal
             if (isdigit(Peek())) {
                 // This is a negative number, parse it as such
-                int start = offset;
+                int start = offset_;
                 Next();           // Skip the minus sign
                 Gather(isdigit);  // Collect digits
 
@@ -190,10 +190,10 @@ bool PiLexer::NextToken() {
                 if (Current() == '.' && isdigit(Peek())) {
                     Next();           // Skip '.'
                     Gather(isdigit);  // Collect fractional digits
-                    return Add(Enum::Float, Slice(start, offset));
+                    return Add(Enum::Float, Slice(start, offset_));
                 }
 
-                return Add(Enum::Int, Slice(start, offset));
+                return Add(Enum::Int, Slice(start, offset_));
             }
 
             return Add(Enum::Minus);
@@ -201,12 +201,12 @@ bool PiLexer::NextToken() {
         case '.':
             if (Peek() == '.') {
                 // Save the start position (first dot)
-                int start = offset;
+                int start = offset_;
                 Next();  // Move past second dot
                 if (Peek() == '.') {
                     // Three dots - create Resume token from saved start
                     Next();  // Move past third dot
-                    return Add(Enum::Resume, Slice(start, offset + 1));
+                    return Add(Enum::Resume, Slice(start, offset_ + 1));
                 }
                 return Fail("Two dots doesn't work");
             }
@@ -223,11 +223,11 @@ bool PiLexer::NextToken() {
         case '/':
             if (Peek() == '/') {
                 Next();
-                const int start = offset;
+                const int start = offset_;
                 while (Next() != '\n');
 
-                Add(Token(Enum::Comment, *this, lineNumber,
-                          Slice(start, offset)));
+                Add(Token(Enum::Comment, *this, lineNumber_,
+                          Slice(start, offset_)));
                 Next();
                 return true;
             }
@@ -251,7 +251,7 @@ bool Contains(const char *allowed, char current) {
 
 // TODO: this isn't a full pathname . See Pathname.cpp in Core
 bool PiLexer::PathnameOrKeyword() {
-    int start = offset;
+    int start = offset_;
     bool quoted = Current() == '\'';
     if (quoted) Next();
 
@@ -281,7 +281,7 @@ bool PiLexer::PathnameOrKeyword() {
 
         prevIdent = true;
 
-        auto isSeparator = Contains(Pathname::Literals::AllButQuote, Current());
+        auto isSeparator = Contains(Pathname::Literals::kAllButQuote, Current());
         if (isSeparator) {
             Next();
             continue;
@@ -292,8 +292,8 @@ bool PiLexer::PathnameOrKeyword() {
         }
     } while (true);
 
-    auto pathText = Slice(start, offset);
-    std::string pathStr(input.begin() + start, input.begin() + offset);
+    auto pathText = Slice(start, offset_);
+    std::string pathStr(input_.begin() + start, input_.begin() + offset_);
     KAI_TRACE() << "[PiLexer] Adding Pathname token: '" << pathStr << "'";
     Add(Enum::Pathname, pathText);
 

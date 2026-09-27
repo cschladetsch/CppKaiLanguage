@@ -8,27 +8,27 @@ KAI_BEGIN
 
 void RhoLexer::AddKeyWords() {
     // Basic keywords
-    keyWords["if"] = Enum::If;
-    keyWords["else"] = Enum::Else;
-    keyWords["true"] = Enum::True;
-    keyWords["false"] = Enum::False;
-    keyWords["return"] = Enum::Return;
-    keyWords["self"] = Enum::Self;
-    keyWords["fun"] = Enum::Fun;
-    keyWords["yield"] = Enum::Yield;
-    keyWords["assert"] = Enum::Assert;
+    keyWords_["if"] = Enum::If;
+    keyWords_["else"] = Enum::Else;
+    keyWords_["true"] = Enum::True;
+    keyWords_["false"] = Enum::False;
+    keyWords_["return"] = Enum::Return;
+    keyWords_["self"] = Enum::Self;
+    keyWords_["fun"] = Enum::Fun;
+    keyWords_["yield"] = Enum::Yield;
+    keyWords_["assert"] = Enum::Assert;
 
     // Pi language transitions
-    keyWords["pi"] = Enum::ToPi;
-    keyWords["pi{"] = Enum::PiSequence;
+    keyWords_["pi"] = Enum::ToPi;
+    keyWords_["pi{"] = Enum::PiSequence;
 
     // Iteration constructs
-    keyWords["while"] = Enum::While;
-    keyWords["for"] = Enum::For;
-    keyWords["do"] = Enum::DoWhile;  // 'do' is recognized as DoWhile token
-    keyWords["in"] = Enum::In;  // 'in' keyword for iterator-style for loops
-    keyWords["break"] = Enum::Break;
-    keyWords["continue"] = Enum::Continue;
+    keyWords_["while"] = Enum::While;
+    keyWords_["for"] = Enum::For;
+    keyWords_["do"] = Enum::DoWhile;  // 'do' is recognized as DoWhile token
+    keyWords_["in"] = Enum::In;  // 'in' keyword for iterator-style for loops
+    keyWords_["break"] = Enum::Break;
+    keyWords_["continue"] = Enum::Continue;
 }
 
 bool RhoLexer::NextToken() {
@@ -46,7 +46,7 @@ bool RhoLexer::NextToken() {
 
     if (isdigit(current)) {
         // Collect the digits
-        int start = offset;
+        int start = offset_;
         while (isdigit(Current())) {
             Next();
         }
@@ -57,10 +57,10 @@ bool RhoLexer::NextToken() {
             while (isdigit(Current())) {
                 Next();
             }
-            return Add(Enum::Float, Slice(start, offset));
+            return Add(Enum::Float, Slice(start, offset_));
         }
 
-        return Add(Enum::Int, Slice(start, offset));
+        return Add(Enum::Int, Slice(start, offset_));
     }
 
     switch (current) {
@@ -127,12 +127,12 @@ bool RhoLexer::NextToken() {
         case '/':
             if (Peek() == '/') {
                 Next();
-                int start = offset;
+                int start = offset_;
                 while (Current() != 0 && Next() != '\n') {
                 }
 
-                Token comment(Enum::Comment, *this, lineNumber,
-                              Slice(start, offset));
+                Token comment(Enum::Comment, *this, lineNumber_,
+                              Slice(start, offset_));
                 Add(comment);
 
                 // Preserve line structure for indentation-sensitive parsing.
@@ -193,8 +193,8 @@ bool RhoLexer::LexSingleQuotedStringIfPresent() {
         return false;
     }
 
-    const int start = offset;
-    int cursor = offset + 1;
+    const int start = offset_;
+    int cursor = offset_ + 1;
     bool escaped = false;
     const std::string& line = Line();
 
@@ -215,8 +215,8 @@ bool RhoLexer::LexSingleQuotedStringIfPresent() {
         }
         if (ch == '\'') {
             // Consume through closing quote and emit String token.
-            offset = cursor + 1;
-            AddStringToken(lineNumber, Slice(start + 1, cursor));
+            offset_ = cursor + 1;
+            AddStringToken(lineNumber_, Slice(start + 1, cursor));
             return true;
         }
         ++cursor;
@@ -229,7 +229,7 @@ bool RhoLexer::LexSingleQuotedStringIfPresent() {
 // TODO: this is the same as PiLexer::PathnameOrKeyword(!)
 bool RhoLexer::LexPathname() {
     // Store the current position for later use
-    int start = offset;
+    int start = offset_;
 
     // Check if this is a quoted pathname
     bool quoted = Current() == '\'';
@@ -242,7 +242,7 @@ bool RhoLexer::LexPathname() {
     // If this is not quoted or rooted, it might be a keyword or identifier
     if (!quoted && !rooted && (isalpha(Current()) || Current() == '_')) {
         // Save the start position of the word
-        int wordStart = offset;
+        int wordStart = offset_;
         std::string word;
 
         // Collect the entire word
@@ -251,16 +251,16 @@ bool RhoLexer::LexPathname() {
             Next();
         }
 
-        // Check if it's a keyword - simplified logic to just use the keyWords
+        // Check if it's a keyword - simplified logic to just use the keyWords_
         // map
-        auto it = keyWords.find(word);
-        if (it != keyWords.end()) {
+        auto it = keyWords_.find(word);
+        if (it != keyWords_.end()) {
             // Add the token with the appropriate enum type
-            return Add(it->second, Slice(wordStart, offset));
+            return Add(it->second, Slice(wordStart, offset_));
         }
 
         // Not a keyword, it's a regular identifier
-        return Add(Enum::Label, Slice(wordStart, offset));
+        return Add(Enum::Label, Slice(wordStart, offset_));
     }
 
     // If it's a quoted or rooted path, process it as a pathname
@@ -276,7 +276,7 @@ bool RhoLexer::LexPathname() {
                 prevIdent = true;
             }
 
-            if (Contains(Pathname::Literals::AllButQuote, Current())) {
+            if (Contains(Pathname::Literals::kAllButQuote, Current())) {
                 Next();
                 continue;
             }
@@ -284,11 +284,11 @@ bool RhoLexer::LexPathname() {
             break;
         } while (true);
 
-        return Add(Enum::Pathname, Slice(start, offset));
+        return Add(Enum::Pathname, Slice(start, offset_));
     }
 
     // If we get here, it's probably an error or an empty identifier
-    return Add(Enum::Label, Slice(start, offset));
+    return Add(Enum::Label, Slice(start, offset_));
 }
 
 void RhoLexer::Terminate() { Add(Enum::None, 0); }
