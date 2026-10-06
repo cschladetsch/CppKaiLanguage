@@ -932,9 +932,11 @@ void RhoTranslator::TranslateBinaryOp(AstNodePtr node, Operation::Type op) {
             // Apply SetChild operation
             AppendDirectOperation(Operation::SetChild);
 
-            // SetChild leaves the modified array on the stack
-            // But Store expects [value, name], so we need to skip the Store
-            // operation
+            // SetChild leaves the modified array on the stack. An assignment
+            // is a statement and a plain Store leaves nothing, so drop it;
+            // otherwise every a[i] = v in a loop or function leaks one
+            // container onto the data stack.
+            AppendDirectOperation(Operation::Drop);
             return;  // Skip the Store operation below
 
         } else if (identNode->GetType() == AstNodeEnum::GetMember) {
@@ -959,7 +961,9 @@ void RhoTranslator::TranslateBinaryOp(AstNodePtr node, Operation::Type op) {
             AppendDirectOperation(Operation::Rot);  // [object, key, value]
             AppendDirectOperation(Operation::SetChild);
 
-            // SetChild leaves the modified container on the stack; skip Store
+            // SetChild leaves the modified container on the stack; drop it
+            // as for indexed assignment, and skip Store
+            AppendDirectOperation(Operation::Drop);
             return;
 
         } else if (identNode->GetToken().type == RhoTokenEnumType::Label) {
@@ -1050,6 +1054,10 @@ void RhoTranslator::TranslateCall(AstNodePtr node) {
                 TranslateNode(objectNode);
                 TranslateNode(callArgs[0]);
                 AppendDirectOperation(Operation::ArrayPush);
+                // ArrayPush leaves the list on the stack (Pi chains pushes);
+                // xs.push(v) in Rho is a statement, so drop it rather than
+                // leak one list per push.
+                AppendDirectOperation(Operation::Drop);
                 return;
             }
 
