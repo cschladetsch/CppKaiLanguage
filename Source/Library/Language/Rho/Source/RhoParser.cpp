@@ -17,7 +17,7 @@ static const std::unordered_set<std::string> piKeywords = {
     "tolist", "tomap",  "toset",   "mul",     "mod",   "noteq",    "lls",
     "ls",     "freeze", "thaw",    "at"};
 
-static bool IsPiKeyword(const std::string& name) {
+[[maybe_unused]] static bool IsPiKeyword(const std::string& name) {
     return piKeywords.find(name) != piKeywords.end();
 }
 
@@ -472,16 +472,6 @@ bool RhoParser::Expression() {
         auto node = NewNode(Consume());
         auto ident = Pop();
 
-        // Validate that variable name is not a Pi keyword
-        if (ident && ident->GetToken().type == TokenType::Label) {
-            std::string varName = ident->GetTokenText();
-            if (IsPiKeyword(varName)) {
-                return CreateError(
-                    ("Variable name '" + varName +
-                     "' conflicts with Pi keyword and cannot be used")
-                        .c_str());
-            }
-        }
 
         if (!Expression()) {
             Fail(Lexer::CreateErrorMessage(
@@ -1226,13 +1216,7 @@ bool RhoParser::ForLoop(AstNodePtr block) {
         auto loopVar = NewNode(Consume());
 
         // Validate that loop variable name is not a Pi keyword
-        std::string loopVarName = loopVar->GetTokenText();
-        if (IsPiKeyword(loopVarName)) {
-            return CreateError(
-                ("Loop variable name '" + loopVarName +
-                 "' conflicts with Pi keyword and cannot be used")
-                    .c_str());
-        }
+        [[maybe_unused]] std::string loopVarName = loopVar->GetTokenText();
 
         // Check if next token is 'in'
         if (Try(TokenType::In)) {
