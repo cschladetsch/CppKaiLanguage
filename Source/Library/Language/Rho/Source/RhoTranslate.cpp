@@ -220,11 +220,11 @@ Pointer<Continuation> RhoTranslator::Translate(const char* text, Structure st) {
 
     auto lex = std::make_shared<RhoLexer>(text, *reg_);
     lex->Process();
-    if (lex->GetTokens().empty()) {
-        return Object();
-    }
     if (lex->failed) {
         Fail(lex->error);
+        return Object();
+    }
+    if (lex->GetTokens().empty()) {
         return Object();
     }
 

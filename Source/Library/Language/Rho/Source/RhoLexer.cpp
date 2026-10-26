@@ -40,11 +40,11 @@ bool RhoLexer::NextToken() {
     // Debug output removed
 
     // Allow identifiers to start with either a letter or an underscore
-    if (isalpha(current) || current == '_') {
+    if (isalpha(static_cast<unsigned char>(current)) || current == '_') {
         return LexPathname();
     }
 
-    if (isdigit(current)) {
+    if (isdigit(static_cast<unsigned char>(current))) {
         // Collect the digits
         int start = offset_;
         while (isdigit(Current())) {
@@ -95,6 +95,7 @@ bool RhoLexer::NextToken() {
         case ',':
             return Add(Enum::Comma);
         case '*':
+            if (Peek() == '=') return AddTwoCharOp(Enum::MulAssign);
             return Add(Enum::Mul);
         case '[':
             return Add(Enum::OpenSquareBracket);
@@ -141,6 +142,7 @@ bool RhoLexer::NextToken() {
                 }
                 return true;
             }
+            if (Peek() == '=') return AddTwoCharOp(Enum::DivAssign);
             return Add(Enum::Divide);
 
         case '-':

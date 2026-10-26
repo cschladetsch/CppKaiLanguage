@@ -7,6 +7,7 @@
 #include <concepts>
 #include <format>
 #include <iostream>
+#include <atomic>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -1153,8 +1154,8 @@ void RhoTranslator::TranslateFunction(AstNodePtr node) {
         functionName = nameNode->Text();
     } else {
         // Anonymous function - generate a unique name
-        static int anonCounter = 0;
-        functionName = std::format("_anon_{}", anonCounter++);
+        static std::atomic<int> anonCounter{0};
+        functionName = std::format("_anon_{}", anonCounter.fetch_add(1));
     }
 
     KAI_TRACE() << "Function name: " << functionName;

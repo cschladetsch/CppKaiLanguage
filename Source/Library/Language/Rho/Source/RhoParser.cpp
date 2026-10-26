@@ -551,25 +551,8 @@ bool RhoParser::Shift() {
 }
 
 bool RhoParser::Additive() {
-    // unary +/- operator
-    if (Try(TokenType::Plus) || Try(TokenType::Minus)) {
-        auto uniSigned = NewNode(Consume());
-        if (!Term()) return CreateError("Term expected");
-
-        uniSigned->Add(Pop());
-        Push(uniSigned);
-        return true;
-    }
-
-    if (Try(TokenType::Not) || Try(TokenType::BitNot)) {
-        auto negate = NewNode(Consume());
-        if (!Additive()) return CreateError("Additive expected");
-
-        negate->Add(Pop());
-        Push(negate);
-        return true;
-    }
-
+    // Unary operators are parsed in Factor() so they bind tighter than every
+    // binary operator: -x + 1, a * -b, !x == y.
     if (!Term()) return false;
 
     while (Try(TokenType::Plus) || Try(TokenType::Minus)) {
@@ -603,6 +586,18 @@ bool RhoParser::Term() {
 bool RhoParser::Factor() {
     KAI_TRACE() << "RhoParser::Factor - Current token: "
                 << TokenEnumType::ToString(Current().type);
+
+    // Prefix operators. The operand is a Factor so they chain (- -x) and
+    // bind tighter than * / % and every binary operator.
+    if (Try(TokenType::Plus) || Try(TokenType::Minus) ||
+        Try(TokenType::Not) || Try(TokenType::BitNot)) {
+        auto unary = NewNode(Consume());
+        if (!Factor()) return CreateError("Operand expected after unary operator");
+
+        unary->Add(Pop());
+        Push(unary);
+        return true;
+    }
 
     if (Try(TokenType::OpenParan)) {
         auto exp = NewNode(Consume());
